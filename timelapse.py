@@ -16,17 +16,23 @@ import os
 # testing for individual images
 
 image_path = "/home/kayatroyer/Desktop/Leconte/Test_Imgs/091823/IMG_1491.JPG"
-image = Image.open(image_path)
-exif_data = image.getexif()
-file_size = os.path.getsize(image_path)
 
-# getting image data
-print("Image Format:", image.format) 
-print("Image Mode:", image.mode) 
-print("Image Size:", image.size) 
-print("Image Info:", exif_data.get(306))
-print("File Size",file_size/(1e12), "TB")
-        
+# prints image data 
+def process_image(image_path):
+    image = Image.open(image_path)
+    exif_data = image.getexif()
+    file_size = os.path.getsize(image_path)
+    print("Image Format:", image.format) 
+    print("Image Mode:", image.mode) 
+    print("Image Size:", image.size) 
+    print("Image Info:", exif_data.get(306))
+    print("File Size",file_size/(1e12), "TB")
+    
+# prints just the timestamp and no additional data
+def image_timestamp(image_path):
+    image = Image.open(image_path)
+    exif_data = image.getexif()
+    print(os.path.basename(image_path),"Captured at:", exif_data.get(306))    
 
 #   graph of pixel data
 # plt.plot(image.histogram())
@@ -34,21 +40,38 @@ print("File Size",file_size/(1e12), "TB")
 # plt.ylabel('count')
 # plt.show()
 
-# taking in a folder of images
+#taking in a folder of images
 folder_path = "/home/kayatroyer/Desktop/Leconte/091823"
-image_files = [f for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path,f))]
+test_path = "/home/kayatroyer/Desktop/Leconte/Mini Test Folder"
+fuck_folder = "/home/kayatroyer/Desktop/Leconte/Test_notinorder"
 
+def process_folder(folder_path):
+    image_files = [f for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path,f))]
+    for image_file in image_files:
+        image_path = os.path.join(folder_path, image_file)
+        process_image(image_path)
 
+# prints the time each image in the folder was taken 
+def capture_times(folder_path):
+    image_files = [f for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path,f))]
+    for image_file in image_files:
+        image_path = os.path.join(folder_path, image_file)
+        image_timestamp(image_path)
+        
+# organizes the images in te folder by date and time (idk if this is working)
+def organize_images(folder_path):
+    image_files = [f for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path,f))]
+    image_paths_with_timestamps = []
 
-#folder_data = folder_path.getexif()
+    for image_file in image_files:
+        image_path = os.path.join(folder_path, image_file)
+        timestamp = image_timestamp(image_path)
+        if timestamp:
+            image_paths_with_timestamps.append((image_path, timestamp))
 
-# image_files = [f for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path,f))]
-# for file_name in image_files:
-#     try:
-#         image = Image.open(os.path.join(folder_path, file_name))
-#         image.show()
-#     except IOError:
-#         print(f"unable to open {file_name}")
+    # Sort images by timestamp
+    sorted_image_paths = sorted(image_paths_with_timestamps, key=lambda x: x[1])
 
-#folder = Image.open(folder_path)
-# folder_data = folder.getexif()
+    # Print sorted image paths
+    for image_path, timestamp in sorted_image_paths:
+        print(f"Image: {image_path}, Timestamp: {timestamp}")       
