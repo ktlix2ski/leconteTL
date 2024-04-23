@@ -15,7 +15,7 @@ import os
 
 # testing for individual images
 
-image_path = "/home/kayatroyer/Desktop/Leconte/Test_Imgs/091823/IMG_1491.JPG"
+image_path = "C:\Users\ktlix\OneDrive\Desktop\Glaciology_Research_Work\Code_Test_Images\IMG_9286.JPG"
 
 # prints image data 
 def process_image(image_path):
@@ -41,9 +41,9 @@ def image_timestamp(image_path):
 # plt.show()
 
 #taking in a folder of images
-folder_path = "/home/kayatroyer/Desktop/Leconte/091823"
-test_path = "/home/kayatroyer/Desktop/Leconte/Mini Test Folder"
-fuck_folder = "/home/kayatroyer/Desktop/Leconte/Test_notinorder"
+#folder_path = "/home/kayatroyer/Desktop/Leconte/091823"
+#test_path = "C:\Users\ktlix\OneDrive\Desktop\Glaciology_Research_Work\Code_Test_Images"
+#fuck_folder = "/home/kayatroyer/Desktop/Leconte/Test_notinorder"
 
 def process_folder(folder_path):
     image_files = [f for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path,f))]
@@ -69,9 +69,9 @@ def organize_images(folder_path):
         if timestamp:
             image_paths_with_timestamps.append((image_path, timestamp))
 
-    # Sort images by timestamp
-    sorted_image_paths = sorted(image_paths_with_timestamps, key=lambda x: x[1])
+# Sort images by timestamp
+sorted_image_paths = sorted(image_paths_with_timestamps, key=lambda x: x[1])
 
-    # Print sorted image paths
-    for image_path, timestamp in sorted_image_paths:
-        print(f"Image: {image_path}, Timestamp: {timestamp}")       
+# Print sorted image paths
+for image_path, timestamp in sorted_image_paths:
+    print(f"Image: {image_path}, Timestamp: {timestamp}")       
