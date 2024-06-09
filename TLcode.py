@@ -4,7 +4,7 @@
 
 import numpy as np
 from numpy import asarray
-from PIL import Image
+from PIL import Image, ExifTags
 from PIL.ExifTags import TAGS
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
@@ -45,11 +45,12 @@ def image_timestamp(image_path):
     
 
 # INPUT IMAGE FOLDER PATHS
-folder_path = "/home/kayatroyer/Desktop/Leconte/091823"
+folder_path = "/home/kayatroyer/leconteTL/Leconte/091823"
 test_path = "/home/kayatroyer/leconteTL/Leconte/Mini_Test_Folder"
 big_test = "/home/kayatroyer/Desktop/Leconte/bigminitest"
 bleh_folder = "/home/kayatroyer/Desktop/Leconte/Test_notinorder"
 output = "/home/kayatroyer/Desktop/Leconte/output_test"
+drive_path = "/media/kayatroyer/BU_TLDRVid/TimeLapse/South/Canon/90D/092023"
         
 
 def process_folder(folder_path):
@@ -65,7 +66,7 @@ def process_folder(folder_path):
                 print(f"Failed to process {image_path}: {e}")
                 failed_files.append(image_path)
         else:
-            print(f"Skipping {image_path} as it does not exist")
+            print(f"Skipping {image_path} DNE")
             failed_files.append(image_path)
     print("FAILED TO PROCESS FOLLOWING FILES:")
     for failed_file in failed_files:
@@ -92,11 +93,11 @@ def folder_opening(folder_path):
         except Exception as e:
             print(f"Error opening {full_image_path}: {e}")
     image_array = np.array(empty)
-    return image_array
+    return image_array[0]
             
 img_array = folder_opening(test_path)
 
-vid_folder = "/home/kayatroyer/leconteTL/Leconte/video_folder/test_video2.mp4"
+vid_folder = "/home/kayatroyer/leconteTL/Leconte/video_folder/hopefuldrivetest2.mp4"
 
 
 def create_timelapse(video_path, images_array, fps):
@@ -104,7 +105,7 @@ def create_timelapse(video_path, images_array, fps):
     height, width, _ = images_array[0].shape
     
     #create VideoWriter object
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Change codec as needed (e.g., 'XVID' for .avi format)
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')  
     out = cv2.VideoWriter(video_path, fourcc, fps, (width, height))
     #write images to video
     for img in images_array:
@@ -114,6 +115,96 @@ def create_timelapse(video_path, images_array, fps):
     out.release()
     print("done, check video folder for timelapse video")
     
+def get_orientation(image_path):
+    """Gets the orientation from an image file."""
+    image = Image.open(image_path)
+    exif_data = image._getexif()
+    if exif_data is not None:
+        for tag, value in exif_data.items():
+            if ExifTags.TAGS.get(tag) == 'Orientation':
+                return value
+    return 1
+
+    
+def open_createTL(folder_path, video_out_path, fps):
+    "combines folder_opening and create_timelapse so it dont crash (workingggg)"
+    #timestamp writer is not working 
+    
+    image_files = [f for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path,f))]
+    image_files.sort()
+    total_images = len(os.listdir(folder_path)) 
+    count = 0 
+    batch = 20
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')  
+    out = None
+    initialized = False
+    
+    while count < total_images:
+        img_array = []
+        for i in range(count, min(count+batch, total_images)):
+            img_path = os.path.join(folder_path, image_files[i])
+            orientation = get_orientation(img_path)
+            image = Image.open(img_path).convert('RGB')
+            exif_data = image.getexif()
+            timestamp = exif_data.get(306)
+            img = np.array(image)
+            
+            if img is not None:
+                bgr_img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+               
+               # Rotate image 
+                if orientation == 3:
+                   bgr_img = cv2.rotate(bgr_img, cv2.ROTATE_180)
+                elif orientation == 6:
+                   bgr_img = cv2.rotate(bgr_img, cv2.ROTATE_90_COUNTERCLOCKWISE)
+                elif orientation == 8:
+                   bgr_img = cv2.rotate(bgr_img, cv2.ROTATE_90_CLOCKWISE)
+               
+                cv2.putText(bgr_img, timestamp, (100, 100), cv2.FONT_HERSHEY_PLAIN, 5, (255, 255, 255), 2, cv2.LINE_AA)               
+                img_array.append(bgr_img)
+                
+        if not initialized and img_array:
+            height,width, _ = img_array[0].shape
+            out = cv2.VideoWriter(video_out_path, fourcc, fps, (width, height))
+            initialized = True
+            
+        for img in img_array:
+            out.write(img)
+        img_array.clear()
+        count += batch
+        
+    if out is not None:
+        out.release()
+    print("done, check video folder for timelapse video")    
+        
     
 #WORKS FOR SMALL FOLDERS RN BUT CRASHES WITH BIG ONES
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
