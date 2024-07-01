@@ -95,7 +95,7 @@ def folder_opening(folder_path):
     image_array = np.array(empty)
     return image_array[0]
             
-img_array = folder_opening(test_path)
+# img_array = folder_opening(test_path)
 
 vid_folder = "/home/kayatroyer/leconteTL/Leconte/video_folder/hopefuldrivetest2.mp4"
 
@@ -125,14 +125,36 @@ def get_orientation(image_path):
                 return value
     return 1
 
+def collect_image_files(folder_path):
+   image_files = []
+    
+   def recurse_dirs(current_path):
+       print(f"Entering directory: {current_path}")  # Debug statement
+       for entry in os.listdir(current_path):
+           entry_path = os.path.join(current_path, entry)
+           if os.path.isdir(entry_path):
+               recurse_dirs(entry_path)
+           elif entry.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.bmp', '.gif')):
+               print(f"Found image file: {entry_path}")  # Debug statement
+               image_files.append(entry_path)
+                
+   recurse_dirs(folder_path)
+   print(f"Total images collected: {len(image_files)}")  # Debug statement
+   return image_files
+
+N_C1_061524 ="/media/kayatroyer/Leconte24TL/June_TL_Images/North/Canon1(90D)/06_15_24"
+vid_N_C1_061524 = "/media/kayatroyer/Leconte24TL/June_TL_Images/North/Canon1(90D)/06_15_24/vid_N_C1_061524.mp4"
     
 def open_createTL(folder_path, video_out_path, fps):
     "combines folder_opening and create_timelapse so it dont crash (workingggg)"
     #timestamp writer is not working 
     
-    image_files = [f for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path,f))]
+    #image_files = [f for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path,f))]
+    image_files = collect_image_files(folder_path)
     image_files.sort()
-    total_images = len(os.listdir(folder_path)) 
+    total_images = len(image_files)
+    print(f"Total images found: {total_images}")
+
     count = 0 
     batch = 20
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')  
@@ -142,26 +164,30 @@ def open_createTL(folder_path, video_out_path, fps):
     while count < total_images:
         img_array = []
         for i in range(count, min(count+batch, total_images)):
-            img_path = os.path.join(folder_path, image_files[i])
-            orientation = get_orientation(img_path)
-            image = Image.open(img_path).convert('RGB')
-            exif_data = image.getexif()
-            timestamp = exif_data.get(306)
-            img = np.array(image)
+            img_path = image_files[i]
+            try:
+                orientation = get_orientation(img_path)
+                image = Image.open(img_path).convert('RGB')
+                exif_data = image.getexif()
+                timestamp = exif_data.get(306)
+                img = np.array(image)
             
-            if img is not None:
-                bgr_img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-               
-               # Rotate image 
-                if orientation == 3:
-                   bgr_img = cv2.rotate(bgr_img, cv2.ROTATE_180)
-                elif orientation == 6:
-                   bgr_img = cv2.rotate(bgr_img, cv2.ROTATE_90_COUNTERCLOCKWISE)
-                elif orientation == 8:
-                   bgr_img = cv2.rotate(bgr_img, cv2.ROTATE_90_CLOCKWISE)
-               
-                cv2.putText(bgr_img, timestamp, (100, 100), cv2.FONT_HERSHEY_PLAIN, 5, (255, 255, 255), 2, cv2.LINE_AA)               
-                img_array.append(bgr_img)
+                if img is not None:
+                    bgr_img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+                   
+                   # Rotate image 
+                    if orientation == 3:
+                       bgr_img = cv2.rotate(bgr_img, cv2.ROTATE_180)
+                    elif orientation == 6:
+                       bgr_img = cv2.rotate(bgr_img, cv2.ROTATE_90_COUNTERCLOCKWISE)
+                    elif orientation == 8:
+                       bgr_img = cv2.rotate(bgr_img, cv2.ROTATE_90_CLOCKWISE)
+                   
+                    if timestamp:
+                        cv2.putText(bgr_img, timestamp, (150, 150), cv2.FONT_HERSHEY_PLAIN, 10, (0, 0, 0), 5, cv2.LINE_AA)               
+                    img_array.append(bgr_img)
+            except Exception as e:
+                    print(f"Error processing image {img_path}: {e}")
                 
         if not initialized and img_array:
             height,width, _ = img_array[0].shape
@@ -172,6 +198,7 @@ def open_createTL(folder_path, video_out_path, fps):
             out.write(img)
         img_array.clear()
         count += batch
+        print(f"Processed {min(count, total_images)} out of {total_images} images.")
         
     if out is not None:
         out.release()
