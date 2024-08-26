@@ -95,12 +95,12 @@ def folder_opening(folder_path):
     image_array = np.array(empty)
     return image_array[0]
             
-# img_array = folder_opening(test_path)
 
 vid_folder = "/home/kayatroyer/leconteTL/Leconte/video_folder/hopefuldrivetest2.mp4"
 
 
 def create_timelapse(video_path, images_array, fps):
+    "does not work for big folders"
     #image dimensions
     height, width, _ = images_array[0].shape
     
@@ -142,8 +142,26 @@ def collect_image_files(folder_path):
    print(f"Total images collected: {len(image_files)}")  # Debug statement
    return image_files
 
-N_C1_061524 ="/media/kayatroyer/Leconte24TL/June_TL_Images/North/Canon1(90D)/06_15_24"
-vid_N_C1_061524 = "/media/kayatroyer/Leconte24TL/June_TL_Images/North/Canon1(90D)/06_15_24/vid_N_C1_061524.mp4"
+def calculate_brightness(image):
+    # Convert the image to grayscale
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    # Calculate the mean brightness
+    return np.mean(gray)
+
+def adjust_exposure(image, target_brightness, current_brightness):
+    # Calculate the brightness ratio
+    ratio = target_brightness / current_brightness
+    # Adjust the image exposure
+    return cv2.convertScaleAbs(image, alpha=ratio, beta=0)
+
+def adjust_color_balance(image, alpha=1.0, beta=0.0):
+    # Adjust the color balance to make the image less blue if necessary
+    adjusted_image = cv2.convertScaleAbs(image, alpha=alpha, beta=beta)
+    return adjusted_image
+
+
+N_C1_061824 ="/media/kayatroyer/LC_TL_Win/July24Data/Timelapse/North/Canon1/061824"
+vid_N_C1_061824 = "/home/kayatroyer/Desktop/Leconte/videos/vid_N_C1_061824.mp4"
     
 def open_createTL(folder_path, video_out_path, fps):
     "combines folder_opening and create_timelapse so it dont crash (workingggg)"
@@ -156,7 +174,7 @@ def open_createTL(folder_path, video_out_path, fps):
     print(f"Total images found: {total_images}")
 
     count = 0 
-    batch = 20
+    batch = 100
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')  
     out = None
     initialized = False
@@ -182,9 +200,14 @@ def open_createTL(folder_path, video_out_path, fps):
                        bgr_img = cv2.rotate(bgr_img, cv2.ROTATE_90_COUNTERCLOCKWISE)
                     elif orientation == 8:
                        bgr_img = cv2.rotate(bgr_img, cv2.ROTATE_90_CLOCKWISE)
+                       
+                    # Adjust exposure
+                    #current_brightness = calculate_brightness(bgr_img)
+                    #adjusted_img = adjust_exposure(bgr_img, target_brightness, current_brightness)
                    
                     if timestamp:
-                        cv2.putText(bgr_img, timestamp, (150, 150), cv2.FONT_HERSHEY_PLAIN, 10, (0, 0, 0), 5, cv2.LINE_AA)               
+                        cv2.putText(bgr_img, timestamp, (150, 150), cv2.FONT_HERSHEY_PLAIN, 10, (0, 255, 0), 5, cv2.LINE_AA)               
+                    #img_array.append(adjusted_img)
                     img_array.append(bgr_img)
             except Exception as e:
                     print(f"Error processing image {img_path}: {e}")
@@ -205,7 +228,6 @@ def open_createTL(folder_path, video_out_path, fps):
     print("done, check video folder for timelapse video")    
         
     
-#WORKS FOR SMALL FOLDERS RN BUT CRASHES WITH BIG ONES
 
 
 
